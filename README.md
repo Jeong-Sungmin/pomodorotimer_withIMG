@@ -4,8 +4,8 @@
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-배포됨-brightgreen)](https://jeong-sungmin.github.io/pomodorotimer_withIMG/)
 
-![타이머 설정 화면](image-1.png)
-![타이머 실행 화면 (이미지 배경)](image.png)
+![타이머 설정 화면]![1744473802885](image/README/1744473802885.png)
+![타이머 실행 화면 ]!![1744473969683](image/README/1744473969683.png)
 
 ## ✨ 주요 기능
 
