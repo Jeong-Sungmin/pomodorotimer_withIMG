@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포모도로 시계 (Web Audio)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="timer-container">
+        {/* 시각 효과 영역 */}
+        <div class="progress-visualizer" id="progressVisualizer">
+            <div class="progress-overlay fade-overlay" id="fadeOverlay"></div>
+            <div class="progress-overlay image-effect-container" id="imageEffectContainer">
+                {/* placeholder.jpg는 선택 사항입니다. 없으면 이미지 효과 선택 시 페이드 효과로 대체됩니다. */}
+                <img src="placeholder.jpg" alt="배경 이미지" id="backgroundImage" onerror="this.style.display='none';">
+                <div class="image-overlay" id="imageOverlay"></div>
+            </div>
+        </div>
+
+        {/* 컨트롤 및 정보 영역 */}
+        <div class="controls">
+            <div id="currentTimeDisplay">--:--:--</div>
+            <div class="timer-display" id="timerDisplay">--:--</div>
+            <div class="timer-status" id="timerStatus">대기 중</div>
+            <div class="notification-area" id="notificationArea"></div>
+
+            <div class="settings-area">
+                 <fieldset>
+                    <legend>타이머 설정</legend>
+                    <div>
+                        <label>타입:</label>
+                        <input type="radio" id="typeSingle" name="timerType" value="single" checked> <label for="typeSingle">단일</label>
+                        <input type="radio" id="typePomodoro" name="timerType" value="pomodoro"> <label for="typePomodoro">포모도로</label>
+                    </div>
+                    <div>
+                        <label for="workDurationInput">집중 시간 (분):</label>
+                        <input type="number" id="workDurationInput" value="25" min="1">
+                    </div>
+                    <div id="breakSettings" style="display: none;">
+                         <label for="breakDurationInput">휴식 시간 (분):</label>
+                         <input type="number" id="breakDurationInput" value="5" min="1">
+                    </div>
+                    <div>
+                         <label for="delayInput">시작 지연 (초):</label>
+                         <input type="number" id="delayInput" value="3" min="0">
+                    </div>
+                </fieldset>
+                 <fieldset>
+                    <legend>알림 설정</legend>
+                     <div>
+                        <label for="notifyInput">종료 알림 (분 전):</label>
+                        <input type="number" id="notifyInput" value="5" min="0">
+                    </div>
+                     <div>
+                        <label>알림 방식:</label>
+                        <select id="notificationType">
+                            <option value="text">텍스트</option>
+                            <option value="beep">삐 소리 (Web Audio)</option>
+                            <option value="speech">음성 (브라우저 지원 시)</option>
+                        </select>
+                    </div>
+                </fieldset>
+                 <fieldset>
+                    <legend>시각 효과 설정</legend>
+                    <div>
+                        <label>효과:</label>
+                        <select id="visualEffectType">
+                            <option value="fade" selected>검정->흰색</option>
+                            <option value="image">이미지 표시 (이미지 필요)</option>
+                        </select>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="buttons">
+                <button id="startButton">시작</button>
+                <button id="pauseButton" disabled>일시정지</button>
+                <button id="resetButton">초기화</button>
+            </div>
+        </div>
+    </div>
+
+    {/* <audio> 태그가 필요 없습니다. */}
+
+    <script src="script.js"></script>
+</body>
+</html>
