@@ -48,11 +48,14 @@
           <fieldset>
             <legend>알림 설정</legend>
             <div>
-              <label for="notifyInput">알림 (분 전):</label>
+              <label for="notifyInput">종료 알림 (분 전):</label>
               <input type="number" id="notifyInput" value="5" min="0" />
             </div>
             <div>
-              <label>알림 방식:</label>
+              <!-- 이 설정은 이제 '종료 X분 전', '종료 시' 알림에는 적용되지 않음 -->
+              <label title="기타 알림 발생 시 사용될 수 있습니다."
+                >기본 방식:</label
+              >
               <select id="notificationType">
                 <option value="popup">텍스트 팝업</option>
                 <option value="beep">삐 소리</option>
@@ -95,7 +98,9 @@
           </fieldset>
 
           <fieldset>
-            <legend>배경 오디오 (유튜브)</legend>
+            <legend>
+              배경 오디오 (유튜브) [*주의 : 최대 30초 정도 광고 나옴]
+            </legend>
             <div class="youtube-input-group">
               <label for="youtubeUrl">유튜브 링크:</label>
               <input

@@ -7,12 +7,10 @@ var youtubeVideoId = null,
 var youtubeShouldBePlaying = false,
   youtubePausedForNotification = false,
   lastYoutubeError = null;
-
 function onYouTubeIframeAPIReady() {
   isYouTubeApiReady = true;
   console.log("YouTube API Ready.");
 }
-
 function onPlayerReady(event) {
   isYouTubePlayerReady = true;
   youtubeVideoDuration = event.target.getDuration();
@@ -29,38 +27,36 @@ function onPlayerReady(event) {
     playYouTubeAudio();
   }
 }
-
 function onPlayerStateChange(event) {
   let stateMsg = "상태 알 수 없음";
   let stateCode = event.data;
   switch (stateCode) {
     case YT.PlayerState.UNSTARTED:
       stateMsg = "시작 전";
-      break; // -1
+      break;
     case YT.PlayerState.ENDED:
       stateMsg = "종료됨 (반복 재생)";
-      break; // 0
+      break;
     case YT.PlayerState.PLAYING:
       stateMsg = "재생 중";
       lastYoutubeError = null;
-      break; // 1
+      break;
     case YT.PlayerState.PAUSED:
       stateMsg = youtubePausedForNotification
         ? "알림으로 일시정지됨"
         : "일시정지됨";
-      break; // 2
+      break;
     case YT.PlayerState.BUFFERING:
       stateMsg = "버퍼링 중...";
-      break; // 3
+      break;
     case YT.PlayerState.CUED:
       stateMsg = "로드됨 (대기 중)";
-      break; // 5
+      break;
   }
   console.log(`YouTube Player State Change: ${stateCode} (${stateMsg})`);
   if (!lastYoutubeError) {
     document.getElementById("youtubeStatus").textContent = stateMsg;
   }
-
   if (stateCode === YT.PlayerState.ENDED && youtubeShouldBePlaying) {
     console.log("Looping YouTube video.");
     youtubePlayer.seekTo(0);
@@ -70,13 +66,11 @@ function onPlayerStateChange(event) {
     handleYoutubeError(lastYoutubeError);
   }
 }
-
 function onPlayerError(event) {
   console.error("YouTube Player Error Code:", event.data);
   lastYoutubeError = event.data;
   handleYoutubeError(event.data);
 }
-
 function handleYoutubeError(errorCode) {
   let msg = `로드/재생 실패 (코드: ${errorCode})`;
   switch (errorCode) {
@@ -96,7 +90,8 @@ function handleYoutubeError(errorCode) {
   }
   document.getElementById("youtubeStatus").textContent = `오류: ${msg}`;
   console.error(`YouTube Error: ${msg} (Code: ${errorCode})`);
-  youtubeVideoId = null; // youtubeShouldBePlaying = false; // 오류 발생 시 재생 중단
+  youtubeVideoId = null;
+  youtubeShouldBePlaying = false;
 }
 
 // === 포모도로 타이머 로직 ===
@@ -170,7 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 배경화면 업데이트 ---
   function updateBackground() {
-    /* 이전 버전의 수정된 코드와 동일 */
     const elapsedSeconds = totalDurationSeconds - remainingSeconds;
     let progressPercentage =
       totalDurationSeconds > 0
@@ -217,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 오디오 및 알림 함수 ---
   function playBeepFallback() {
-    /* 이전과 동일 */ try {
+    try {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -244,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function triggerSpeech(message) {
-    /* 이전과 동일 */ if (
+    if (
       "speechSynthesis" in window &&
       typeof SpeechSynthesisUtterance !== "undefined"
     ) {
@@ -266,12 +260,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function showModal(message) {
-    /* 이전과 동일 */ modalMessage.textContent = message;
+    modalMessage.textContent = message;
     modalOverlay.style.display = "block";
     modal.style.display = "block";
   }
   function hideModal() {
-    /* 이전과 동일 */ modalOverlay.style.display = "none";
+    modal.classList.remove("flashing");
+    modalOverlay.style.display = "none";
     modal.style.display = "none";
     if (youtubePausedForNotification) {
       resumeYouTubeAudio();
@@ -280,9 +275,77 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   modalCloseButton.addEventListener("click", hideModal);
   modalOverlay.addEventListener("click", hideModal);
-  function triggerNotification(message, isFinal = false) {
-    /* 이전과 동일 */ const type = notificationTypeSelect.value;
-    let pauseYoutube = type === "popup" || type === "beep" || type === "speech";
+
+  // --- ★ 알림 처리 로직 수정 ---
+  function triggerNotification(message, notificationContext = "general") {
+    console.log(
+      `Triggering notification: ${notificationContext}, Message: ${message}`
+    );
+    let pauseYoutube = false; // 유튜브 멈춤 필요 여부
+
+    // 1. 종료 X분 전 알림: 항상 깜빡이는 팝업, 3초 후 자동 닫힘
+    if (notificationContext === "minutesBefore") {
+      pauseYoutube = true; // 팝업 표시 동안 유튜브 멈춤
+      showModal(message);
+      modal.classList.add("flashing"); // 깜빡임 클래스 추가
+
+      // 깜빡임 효과 제거 및 자동 닫기 타이머
+      setTimeout(() => {
+        modal.classList.remove("flashing");
+      }, 1100); // 애니메이션 시간(0.5s * 2회) + 약간의 여유
+      setTimeout(() => {
+        // 모달이 여전히 열려있고, 이 알림에 의해 열렸다면 닫기
+        if (
+          modal.style.display === "block" &&
+          modalMessage.textContent === message
+        ) {
+          hideModal();
+        }
+      }, 3000); // 3초 후 자동 닫기
+
+      notificationShown = true; // 알림 표시됨 플래그 (중복 방지용)
+
+      // 2. 타이머 종료 시 알림: 항상 삐 소리
+    } else if (notificationContext === "final") {
+      playBeepFallback();
+      // 종료 시에는 유튜브를 멈출 필요 없음 (이미 타이머 종료됨)
+      pauseYoutube = false;
+      notificationShown = false; // 종료는 매번 울리도록 (다음 사이클 위해)
+
+      // 3. (향후 확장용) 일반 알림: 사용자가 선택한 방식 따름
+    } else {
+      const type = notificationTypeSelect.value;
+      pauseYoutube = type === "popup" || type === "beep" || type === "speech"; // 팝업/소리/음성 시 유튜브 멈춤
+
+      if (type === "popup") {
+        showModal(message);
+      } else if (type === "beep") {
+        playBeepFallback();
+        // 삐 소리는 짧으므로, 바로 유튜브 재개 시도 (pause/resume 로직에서 처리)
+        if (pauseYoutube && youtubePausedForNotification) {
+          setTimeout(() => {
+            if (youtubePausedForNotification) {
+              resumeYouTubeAudio();
+              youtubePausedForNotification = false;
+            }
+          }, 300);
+        }
+      } else if (type === "speech") {
+        triggerSpeech(message);
+        // 음성 합성 후 유튜브 재개 시도
+        if (pauseYoutube && youtubePausedForNotification) {
+          setTimeout(() => {
+            if (youtubePausedForNotification) {
+              resumeYouTubeAudio();
+              youtubePausedForNotification = false;
+            }
+          }, 2000);
+        }
+      }
+      notificationShown = true; // 일반 알림도 표시됨 처리
+    }
+
+    // ★ 유튜브 일시정지 처리 (필요한 경우)
     if (
       pauseYoutube &&
       isYouTubePlayerReady &&
@@ -292,44 +355,21 @@ document.addEventListener("DOMContentLoaded", () => {
       youtubePlayer.pauseVideo();
       youtubePausedForNotification = true;
       console.log("Pausing YouTube for notification.");
-    } else {
+    } else if (pauseYoutube) {
+      // 유튜브를 멈춰야 하지만, 이미 멈춰있거나 재생 중이 아님
       youtubePausedForNotification = false;
     }
-    if (type === "popup") {
-      showModal(message);
-    } else if (type === "beep") {
-      playBeepFallback();
-      if (youtubePausedForNotification) {
-        setTimeout(() => {
-          if (youtubePausedForNotification) {
-            resumeYouTubeAudio();
-            youtubePausedForNotification = false;
-          }
-        }, 300);
-      }
-    } else if (type === "speech") {
-      triggerSpeech(message);
-      if (youtubePausedForNotification) {
-        setTimeout(() => {
-          if (youtubePausedForNotification) {
-            resumeYouTubeAudio();
-            youtubePausedForNotification = false;
-          }
-        }, 2000);
-      }
-    }
-    notificationShown = !isFinal;
   }
 
   // --- 유튜브 관련 함수 ---
   function extractVideoID(url) {
-    /* 이전과 동일 */ const r =
+    const r =
       /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/gi;
     const m = r.exec(url);
     return m ? m[1] : null;
   }
   function loadYouTubeVideo() {
-    /* 이전과 동일 */ console.log("Attempting to load YouTube video...");
+    console.log("Attempting to load YouTube video...");
     if (!isYouTubeApiReady) {
       alert("YouTube API 준비 안됨");
       console.error("YouTube API not ready.");
@@ -367,7 +407,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function playYouTubeAudio() {
-    /* 이전과 동일 */ console.log("Attempting to play YouTube audio...");
+    console.log(
+      "Attempting to play YouTube audio... PlayerReady:",
+      isYouTubePlayerReady,
+      "VideoID:",
+      youtubeVideoId,
+      "Error:",
+      lastYoutubeError
+    );
     if (isYouTubePlayerReady && youtubeVideoId && !lastYoutubeError) {
       console.log("Calling playVideo() for ID:", youtubeVideoId);
       youtubeStatus.textContent = "재생 시도 중...";
@@ -385,7 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function pauseYouTubeAudio() {
-    /* 이전과 동일 */ if (
+    if (
       isYouTubePlayerReady &&
       youtubePlayer.getPlayerState() === YT.PlayerState.PLAYING
     ) {
@@ -393,9 +440,12 @@ document.addEventListener("DOMContentLoaded", () => {
       youtubePlayer.pauseVideo();
     }
     youtubeShouldBePlaying = false;
+    if (!youtubePausedForNotification && isYouTubePlayerReady) {
+      /* 상태는 onStateChange에서 업데이트 */
+    }
   }
   function resumeYouTubeAudio() {
-    /* 이전과 동일 */ if (
+    if (
       isYouTubePlayerReady &&
       (timerInterval || isPaused) &&
       !lastYoutubeError
@@ -414,9 +464,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function stopYouTubeAudio() {
-    /* 이전과 동일 */ if (isYouTubePlayerReady && !lastYoutubeError) {
+    if (isYouTubePlayerReady && !lastYoutubeError) {
       console.log("Calling stopVideo()");
-      youtubePlayer.stopVideo();
+      try {
+        youtubePlayer.stopVideo();
+      } catch (e) {
+        console.error("Error calling stopVideo:", e);
+        if (youtubePlayer.pauseVideo) youtubePlayer.pauseVideo();
+        if (youtubePlayer.seekTo) youtubePlayer.seekTo(0);
+      }
     }
     youtubeShouldBePlaying = false;
     youtubePausedForNotification = false;
@@ -428,7 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 타이머 로직 ---
   function startTimer() {
-    /* 이전과 동일 */ if (timerInterval || delayInterval) return;
+    if (timerInterval || delayInterval) return;
     isPaused = false;
     setControlsState(true);
     const delaySeconds = parseInt(delayInput.value);
@@ -468,12 +524,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function runInterval(notifySecondsBeforeEnd) {
-    /* 이전과 동일 */ updateTimerDisplay();
+    updateTimerDisplay();
     updateBackground();
     timerInterval = setInterval(() => {
       remainingSeconds--;
       updateTimerDisplay();
       updateBackground();
+      // ★ "X분 전" 알림 로직 수정
       if (
         !notificationShown &&
         notifySecondsBeforeEnd > 0 &&
@@ -481,8 +538,9 @@ document.addEventListener("DOMContentLoaded", () => {
         remainingSeconds < totalDurationSeconds
       ) {
         triggerNotification(
-          `종료 ${Math.round(notifySecondsBeforeEnd / 60)}분 전입니다!`
-        );
+          `종료 ${Math.round(notifySecondsBeforeEnd / 60)}분 전입니다!`,
+          "minutesBefore"
+        ); // ★ 컨텍스트 전달
       }
       if (remainingSeconds < 0) {
         handleTimerEnd();
@@ -490,15 +548,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1000);
   }
   function handleTimerEnd() {
-    /* 이전과 동일 */ clearInterval(timerInterval);
+    clearInterval(timerInterval);
     timerInterval = null;
     remainingSeconds = 0;
     const breakMinutes = parseInt(breakDurationInput.value);
     let finalMessage = "시간 종료!";
+    // ★ 타이머 종료 알림 로직 수정
+    triggerNotification(finalMessage, "final"); // ★ 컨텍스트 전달 (메시지는 실제 사용 안 함)
+
     if (currentTimerMode === "work") {
       finalMessage = "집중 시간 종료!";
-      triggerNotification(finalMessage, true);
-      pomodoroCycleCount++;
+      /* 화면 표시용 메시지 (알림과 별개) */ pomodoroCycleCount++;
       if (breakMinutes > 0) {
         currentTimerMode = "break";
         timerStatus.textContent = "휴식 시간";
@@ -511,15 +571,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } else {
       finalMessage = "휴식 시간 종료!";
-      triggerNotification(finalMessage, true);
-      currentTimerMode = "work";
+      /* 화면 표시용 메시지 */ currentTimerMode = "work";
       timerStatus.textContent = `집중 시간 (${pomodoroCycleCount + 1}번째)`;
       resetTimerSettings();
       startTimer();
     }
+    // 필요하다면 화면에 종료 메시지 표시 (알림과는 별도로)
+    // showNotificationOnScreen(finalMessage); // 이 함수는 현재 주석처리되어 있음
   }
   function pauseTimer() {
-    /* 이전과 동일 */ if (delayInterval) {
+    if (delayInterval) {
       clearInterval(delayInterval);
       delayInterval = null;
       isPaused = true;
@@ -549,7 +610,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function resetTimer() {
-    /* 이전과 동일 */ clearInterval(timerInterval);
+    clearInterval(timerInterval);
     clearInterval(delayInterval);
     timerInterval = null;
     delayInterval = null;
@@ -571,7 +632,7 @@ document.addEventListener("DOMContentLoaded", () => {
     hideModal();
   }
   function resetTimerSettings() {
-    /* 이전과 동일 */ const workM = parseInt(workDurationInput.value),
+    const workM = parseInt(workDurationInput.value),
       breakM = parseInt(breakDurationInput.value);
     totalDurationSeconds =
       currentTimerMode === "work" ? workM * 60 : breakM * 60;
@@ -582,7 +643,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- UI 및 컨트롤 상태 관리 ---
   function setControlsState(isRunning) {
-    /* 이전과 동일 */ if (isRunning) {
+    if (isRunning) {
       body.classList.add("timer-running");
     } else {
       body.classList.remove("timer-running");
@@ -605,7 +666,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function resetControlsState() {
-    /* 이전과 동일 */ setControlsState(false);
+    setControlsState(false);
     pauseButton.textContent = "일시정지";
     pauseButton.classList.remove("resume");
     pauseButton.disabled = true;
@@ -613,21 +674,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 이벤트 리스너 ---
   imageUpload.addEventListener("change", (event) => {
-    /* 이전과 동일 */ const file = event.target.files[0];
+    const file = event.target.files[0];
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onload = (e) => {
         userImageSrc = e.target.result;
         backgroundImage.src = userImageSrc;
-        backgroundImage.style.display = "block";
-        if (
-          backgroundTypeSelect.value === "imageFade" &&
-          !timerInterval &&
-          !delayInterval &&
-          !isPaused
-        ) {
-          updateBackground();
-        }
+        backgroundImage.onload = () => {
+          console.log("Image loaded successfully.");
+          backgroundImage.style.display = "block";
+          if (
+            backgroundTypeSelect.value === "imageFade" &&
+            !timerInterval &&
+            !delayInterval &&
+            !isPaused
+          ) {
+            updateBackground();
+          }
+        };
+        backgroundImage.onerror = () => {
+          console.error("Failed to load uploaded image.");
+          userImageSrc = null;
+          backgroundImage.style.display = "none";
+          if (
+            backgroundTypeSelect.value === "imageFade" &&
+            !timerInterval &&
+            !delayInterval &&
+            !isPaused
+          ) {
+            updateBackground();
+          }
+        };
       };
       reader.readAsDataURL(file);
     } else {
@@ -636,7 +713,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   function handleBackgroundSettingChange() {
-    /* 이전과 동일 */ const selectedType = backgroundTypeSelect.value;
+    const selectedType = backgroundTypeSelect.value;
     colorFadeOptionsContainer.style.display =
       selectedType === "colorFade" ? "flex" : "none";
     imageUploadContainer.style.display =
@@ -658,7 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
     notifyInput,
     notificationTypeSelect,
   ].forEach((el) => {
-    /* 이전과 동일 */ el.addEventListener("change", () => {
+    el.addEventListener("change", () => {
       if (!timerInterval && !delayInterval && !isPaused) {
         resetTimer();
       } else {
@@ -678,7 +755,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- AudioContext 초기화 리스너 ---
   function initializeAudioContext() {
-    /* 이전과 동일 */ if (!audioContext) {
+    if (!audioContext) {
       try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         console.log("AudioContext initialized.");
