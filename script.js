@@ -1,5 +1,5 @@
 // === YouTube IFrame Player API 로딩 ===
-var youtubePlayer; /* ... (이전과 동일) ... */
+var youtubePlayer;
 var youtubeVideoId = null,
   youtubeVideoDuration = 0,
   isYouTubeApiReady = false,
@@ -22,7 +22,17 @@ function onPlayerReady(event) {
   }
 }
 function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.ENDED) {
+  if (event.data === YT.PlayerState.PLAYING) {
+    document.getElementById("youtubeStatus").textContent = "재생 중";
+    lastYoutubeError = null;
+  } else if (event.data === YT.PlayerState.PAUSED) {
+    if (!youtubePausedForNotification) {
+      document.getElementById("youtubeStatus").textContent = "일시정지됨";
+    }
+  } else if (event.data === YT.PlayerState.BUFFERING) {
+    document.getElementById("youtubeStatus").textContent = "버퍼링 중...";
+  } else if (event.data === YT.PlayerState.ENDED) {
+    document.getElementById("youtubeStatus").textContent = "종료됨 (반복 재생)";
     if (youtubeShouldBePlaying) {
       youtubePlayer.seekTo(0);
       youtubePlayer.playVideo();
@@ -51,10 +61,10 @@ function handleYoutubeError(errorCode) {
       break;
     case 101:
     case 150:
-      msg = "재생 권한 없음";
+      msg = "재생 불가 (권한 없음)";
       break;
   }
-  document.getElementById("youtubeStatus").textContent = msg;
+  document.getElementById("youtubeStatus").textContent = `오류: ${msg}`;
   youtubeVideoId = null;
   isYouTubePlayerReady = false;
   youtubeShouldBePlaying = false;
@@ -64,7 +74,8 @@ function handleYoutubeError(errorCode) {
 document.addEventListener("DOMContentLoaded", () => {
   // --- DOM 요소 참조 ---
   const body = document.body;
-  const currentTimeDisplay = document.getElementById("currentTimeDisplay");
+  /* ... */ const currentTimeDisplay =
+    document.getElementById("currentTimeDisplay");
   const timerDisplay = document.getElementById("timerDisplay");
   const timerStatus = document.getElementById("timerStatus");
   const notificationArea = document.getElementById("notificationArea");
@@ -79,17 +90,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const backgroundTypeSelect = document.getElementById("backgroundType");
   const colorFadeOptionsContainer = document.getElementById(
     "colorFadeOptionsContainer"
-  ); // ★ 단색 페이드 옵션 컨테이너
-  const startColorPicker = document.getElementById("startColorPicker"); // ★ 시작 색상
-  const endColorPicker = document.getElementById("endColorPicker"); // ★ 종료 색상
+  );
+  const startColorPicker = document.getElementById("startColorPicker");
+  const endColorPicker = document.getElementById("endColorPicker");
   const imageUploadContainer = document.getElementById("imageUploadContainer");
   const imageUpload = document.getElementById("imageUpload");
   const progressVisualizer = document.getElementById("progressVisualizer");
-  const fadeOverlay = document.getElementById("fadeOverlay"); // 단색 페이드용
-  const imageEffectContainer = document.getElementById("imageEffectContainer"); // 이미지용
+  const fadeOverlay = document.getElementById("fadeOverlay");
+  const imageEffectContainer = document.getElementById("imageEffectContainer");
   const backgroundImage = document.getElementById("backgroundImage");
-  const imageOverlay = document.getElementById("imageOverlay"); // 이미지용
-  const youtubeUrlInput = document.getElementById("youtubeUrl");
+  /* imageOverlay 제거됨 */ const youtubeUrlInput =
+    document.getElementById("youtubeUrl");
   const loadYoutubeButton = document.getElementById("loadYoutubeButton");
   const youtubeStatus = document.getElementById("youtubeStatus");
   const modal = document.getElementById("notificationModal");
@@ -110,7 +121,6 @@ document.addEventListener("DOMContentLoaded", () => {
     notificationShown = false;
   let audioContext = null;
   let userImageSrc = null;
-  // ★ 현재 배경 설정 저장 (색상은 바로 읽어옴)
   let currentStartColor = startColorPicker.value;
   let currentEndColor = endColorPicker.value;
 
@@ -147,25 +157,28 @@ document.addEventListener("DOMContentLoaded", () => {
     currentStartColor = startColor; // 현재 설정 저장
     currentEndColor = endColor;
 
-    // 기본적으로 모든 효과 요소 숨김
+    // 효과 요소 초기화
     fadeOverlay.style.display = "none";
     imageEffectContainer.style.display = "none";
-    backgroundImage.style.display = "none";
+    backgroundImage.style.display = "none"; // 이미지 기본 숨김
+    backgroundImage.style.opacity = 0; // 이미지 투명도 초기화
+    progressVisualizer.style.backgroundColor = "transparent"; // Visualizer 배경 초기화 (투명)
 
     let useEffectType = selectedType; // 실제 적용될 효과 타입
 
     // 이미지 타입 처리
-    if (useEffectType === "image") {
+    if (useEffectType === "imageFade") {
       const isImageAvailable =
         userImageSrc &&
         backgroundImage.src === userImageSrc &&
         backgroundImage.complete &&
-        backgroundImage.naturalWidth !== 0;
+        backgroundImage.naturalWidth > 0; // naturalWidth > 0 추가
       if (isImageAvailable) {
-        progressVisualizer.style.backgroundColor = "#FFFFFF"; // 이미지 배경은 흰색으로 고정
-        imageEffectContainer.style.display = "block";
-        backgroundImage.style.display = "block";
-        imageOverlay.style.height = `${100 - progressPercentage}%`;
+        imageEffectContainer.style.display = "block"; // 이미지 컨테이너 보이기
+        backgroundImage.style.display = "block"; // 이미지 보이기
+        backgroundImage.style.opacity = progressPercentage / 100; // ★ 투명도 조절
+        // imageEffectContainer의 배경을 검정으로 설정하여 이미지가 나타나기 전 검정색 유지
+        imageEffectContainer.style.backgroundColor = "#000000";
       } else {
         // 이미지 없으면 단색 페이드로 전환
         useEffectType = "colorFade";
@@ -235,12 +248,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function showModal(message) {
-    modalMessage.textContent = message;
+    /* 이전과 동일 */ modalMessage.textContent = message;
     modalOverlay.style.display = "block";
     modal.style.display = "block";
   }
   function hideModal() {
-    modalOverlay.style.display = "none";
+    /* 이전과 동일 */ modalOverlay.style.display = "none";
     modal.style.display = "none";
     if (youtubePausedForNotification) {
       resumeYouTubeAudio();
@@ -297,7 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return m ? m[1] : null;
   }
   function loadYouTubeVideo() {
-    /* 이전과 동일 (onError 포함) */ if (!isYouTubeApiReady) {
+    /* 이전과 동일 */ if (!isYouTubeApiReady) {
       alert("YouTube API 준비 안됨");
       return;
     }
@@ -329,32 +342,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function playYouTubeAudio() {
-    /* 이전과 동일 */ if (
+    /* 상태 업데이트 추가 */ if (
       isYouTubePlayerReady &&
       youtubeVideoId &&
       !lastYoutubeError
     ) {
+      youtubeStatus.textContent = "재생 시도 중...";
       youtubePlayer.playVideo();
       youtubeShouldBePlaying = true;
     } else if (lastYoutubeError) {
       handleYoutubeError(lastYoutubeError);
+    } else if (!isYouTubePlayerReady) {
+      youtubeStatus.textContent = "플레이어 준비 안됨";
     }
   }
   function pauseYouTubeAudio() {
-    /* 이전과 동일 */ if (
+    /* 상태 업데이트 추가 */ if (
       isYouTubePlayerReady &&
       youtubePlayer.getPlayerState() === YT.PlayerState.PLAYING
     ) {
-      youtubePlayer.pauseVideo();
+      youtubePlayer.pauseVideo(); /* youtubeStatus는 onStateChange에서 처리 */
     }
     youtubeShouldBePlaying = false;
   }
   function resumeYouTubeAudio() {
-    /* 이전과 동일 */ if (
+    /* 상태 업데이트 추가 */ if (
       isYouTubePlayerReady &&
       (timerInterval || isPaused) &&
       !lastYoutubeError
     ) {
+      youtubeStatus.textContent = "재생 재개 중...";
       playYouTubeAudio();
     }
   }
@@ -364,7 +381,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     youtubeShouldBePlaying = false;
     youtubePausedForNotification = false;
-  }
+    if (!lastYoutubeError) {
+      youtubeStatus.textContent = "정지됨";
+    }
+  } // 오류 없을때만 정지됨 표시
   loadYoutubeButton.addEventListener("click", loadYouTubeVideo);
 
   // --- 타이머 로직 ---
@@ -409,7 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function runInterval(notifySecondsBeforeEnd) {
-    /* 이전과 동일 (updateBackground 호출) */ updateTimerDisplay();
+    /* 이전과 동일 */ updateTimerDisplay();
     updateBackground();
     timerInterval = setInterval(() => {
       remainingSeconds--;
@@ -490,7 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function resetTimer() {
-    /* 이전과 동일 (updateBackground 호출) */ clearInterval(timerInterval);
+    /* 이전과 동일 */ clearInterval(timerInterval);
     clearInterval(delayInterval);
     timerInterval = null;
     delayInterval = null;
@@ -562,7 +582,7 @@ document.addEventListener("DOMContentLoaded", () => {
         backgroundImage.src = userImageSrc;
         backgroundImage.style.display = "block";
         if (
-          backgroundTypeSelect.value === "image" &&
+          backgroundTypeSelect.value === "imageFade" &&
           !timerInterval &&
           !delayInterval &&
           !isPaused
@@ -581,20 +601,19 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleBackgroundSettingChange() {
     const selectedType = backgroundTypeSelect.value;
     colorFadeOptionsContainer.style.display =
-      selectedType === "colorFade" ? "flex" : "none"; // flex로 변경
+      selectedType === "colorFade" ? "flex" : "none";
     imageUploadContainer.style.display =
-      selectedType === "image" ? "flex" : "none"; // flex로 변경
-
+      selectedType === "imageFade" ? "flex" : "none"; // ID 변경 없음, 타입 값만 바뀜
     if (!timerInterval && !delayInterval && !isPaused) {
-      updateBackground(); // 타이머 멈췄을 때만 즉시 배경 업데이트
+      updateBackground();
     }
   }
   backgroundTypeSelect.addEventListener(
     "change",
     handleBackgroundSettingChange
   );
-  startColorPicker.addEventListener("input", handleBackgroundSettingChange); // 실시간 반영
-  endColorPicker.addEventListener("input", handleBackgroundSettingChange); // 실시간 반영
+  startColorPicker.addEventListener("input", handleBackgroundSettingChange);
+  endColorPicker.addEventListener("input", handleBackgroundSettingChange);
 
   // 나머지 설정 변경 리스너
   [
@@ -619,7 +638,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- 초기화 ---
   updateCurrentTime();
   currentTimeInterval = setInterval(updateCurrentTime, 1000);
-  handleBackgroundSettingChange(); // ★ 초기 로드 시 배경 옵션 표시 설정
+  handleBackgroundSettingChange();
   resetTimer();
 
   // --- AudioContext 초기화 리스너 ---

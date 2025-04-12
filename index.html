@@ -9,21 +9,14 @@
   <body class="">
     <div class="timer-container">
       <div class="progress-visualizer" id="progressVisualizer">
-        <!-- 단색 페이드 효과 요소 -->
         <div class="progress-overlay fade-overlay" id="fadeOverlay"></div>
-        <!-- 이미지 배경 효과 요소 -->
-        <div
-          class="progress-overlay image-effect-container"
-          id="imageEffectContainer"
-        >
+        <div class="image-effect-container" id="imageEffectContainer">
           <img
             src=""
             alt="배경 이미지"
             id="backgroundImage"
-            style="display: none"
-            onerror="this.style.display='none';"
+            onerror="this.style.opacity=0; console.error('Background image failed to load.');"
           />
-          <div class="image-overlay" id="imageOverlay"></div>
         </div>
       </div>
 
@@ -74,7 +67,7 @@
               <label for="backgroundType">배경 타입:</label>
               <select id="backgroundType">
                 <option value="colorFade" selected>단색 페이드</option>
-                <option value="image">이미지 배경</option>
+                <option value="imageFade">이미지 페이드 인</option>
               </select>
             </div>
             <div

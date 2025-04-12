@@ -23,11 +23,11 @@ body {
   width: 100%;
   height: 100%;
   z-index: 1;
-  background-color: #ffffff; /* 기본 배경색 (종료 색상으로 덮어씌워짐) */
-  overflow: hidden; /* 내부 요소가 넘치지 않도록 */
+  background-color: #ffffff; /* 기본 배경색 */
+  overflow: hidden;
 }
 .progress-overlay {
-  /* 공통 오버레이 스타일 */
+  /* 공통 오버레이 스타일 (페이드 효과용) */
   position: absolute;
   top: 0;
   left: 0;
@@ -37,29 +37,35 @@ body {
 }
 .fade-overlay {
   /* 단색 페이드용 오버레이 (시작 색상 담당) */
-  z-index: 3; /* 이미지 효과 위에 */
-  background-color: #000000; /* 기본 시작 색상 (JS에서 덮어씀) */
+  z-index: 3;
+  background-color: #000000;
 }
+
+/* ★ 이미지 배경 효과 수정 */
 .image-effect-container {
-  /* 이미지 배경용 컨테이너 */
-  z-index: 2; /* 페이드 효과 아래 */
+  /* 이미지 담는 컨테이너 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  background-color: #000000; /* 이미지 로딩 중/뒤에 보일 검정 배경 */
   display: none; /* 기본 숨김 */
 }
 #backgroundImage {
-  /* 업로드된 이미지 */
+  /* 업로드된 이미지 - opacity 전환 */
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: none; /* 기본 숨김 */
+  opacity: 0; /* ★ 시작 시 완전 투명 */
+  transition: opacity 0.5s linear; /* ★ 투명도 전환 효과 */
+  display: none; /* 로드 전까지 숨김 */
 }
-.image-overlay {
-  /* 이미지 가리는 검정 오버레이 */
-  background-color: rgba(0, 0, 0, 0.95); /* 더 진하게 */
-  z-index: 1; /* 이미지 위에 */
-}
+/* .image-overlay 제거됨 */
 
 /* 컨트롤 영역 ... */
 .controls {
@@ -183,15 +189,15 @@ body.timer-running .settings-area {
 .background-option-container {
   margin-top: 5px;
   flex-direction: column;
-  align-items: flex-start; /* 내부 요소 세로 정렬 */
+  align-items: flex-start;
 }
 .background-option-container > div {
-  width: 100%; /* 내부 div 너비 100% */
-} /* 색상 선택기 div 정렬 */
+  width: 100%;
+}
 .upload-hint {
   font-size: 0.75em;
   color: #777;
-  margin-left: 94px; /* 레이블 너비+gap 만큼 들여쓰기 */
+  margin-left: 94px;
   text-align: left;
   margin-top: -5px;
 }
