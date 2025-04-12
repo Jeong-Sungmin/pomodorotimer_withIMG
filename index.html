@@ -48,11 +48,10 @@
           <fieldset>
             <legend>알림 설정</legend>
             <div>
-              <label for="notifyInput">종료 알림 (분 전):</label>
+              <label for="notifyInput">알림 (분 전):</label>
               <input type="number" id="notifyInput" value="5" min="0" />
             </div>
             <div>
-              <!-- 이 설정은 이제 '종료 X분 전', '종료 시' 알림에는 적용되지 않음 -->
               <label title="기타 알림 발생 시 사용될 수 있습니다."
                 >기본 방식:</label
               >
@@ -98,9 +97,7 @@
           </fieldset>
 
           <fieldset>
-            <legend>
-              배경 오디오 (유튜브) [*주의 : 최대 30초 정도 광고 나옴]
-            </legend>
+            <legend>배경 오디오 (유튜브)</legend>
             <div class="youtube-input-group">
               <label for="youtubeUrl">유튜브 링크:</label>
               <input
@@ -119,11 +116,12 @@
         <div class="start-button-container">
           <button id="startButton">시작</button>
         </div>
+      </div>
 
-        <div class="running-buttons">
-          <button id="pauseButton" disabled>일시정지</button>
-          <button id="resetButton">초기화</button>
-        </div>
+      <!-- 실행 중 버튼을 controls 밖으로 이동 -->
+      <div class="running-buttons">
+        <button id="pauseButton" disabled>일시정지</button>
+        <button id="resetButton">초기화</button>
       </div>
 
       <div id="youtube-player-container">
