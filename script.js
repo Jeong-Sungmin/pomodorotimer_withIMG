@@ -7,54 +7,84 @@ var youtubeVideoId = null,
 var youtubeShouldBePlaying = false,
   youtubePausedForNotification = false,
   lastYoutubeError = null;
+
 function onYouTubeIframeAPIReady() {
   isYouTubeApiReady = true;
+  console.log("YouTube API Ready.");
 }
+
 function onPlayerReady(event) {
   isYouTubePlayerReady = true;
   youtubeVideoDuration = event.target.getDuration();
-  document.getElementById(
-    "youtubeStatus"
-  ).textContent = `오디오 로드됨 (${formatTime(youtubeVideoDuration)})`;
+  const statusMsg = `오디오 로드됨 (${formatTime(youtubeVideoDuration)})`;
+  document.getElementById("youtubeStatus").textContent = statusMsg;
+  console.log(
+    `YouTube Player Ready for video ID: ${youtubeVideoId}. Duration: ${youtubeVideoDuration}s. Status: ${statusMsg}`
+  );
   lastYoutubeError = null;
   if (youtubeShouldBePlaying) {
+    console.log(
+      "Player ready and should be playing, calling playYouTubeAudio..."
+    );
     playYouTubeAudio();
   }
 }
+
 function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.PLAYING) {
-    document.getElementById("youtubeStatus").textContent = "재생 중";
-    lastYoutubeError = null;
-  } else if (event.data === YT.PlayerState.PAUSED) {
-    if (!youtubePausedForNotification) {
-      document.getElementById("youtubeStatus").textContent = "일시정지됨";
-    }
-  } else if (event.data === YT.PlayerState.BUFFERING) {
-    document.getElementById("youtubeStatus").textContent = "버퍼링 중...";
-  } else if (event.data === YT.PlayerState.ENDED) {
-    document.getElementById("youtubeStatus").textContent = "종료됨 (반복 재생)";
-    if (youtubeShouldBePlaying) {
-      youtubePlayer.seekTo(0);
-      youtubePlayer.playVideo();
-    }
+  let stateMsg = "상태 알 수 없음";
+  let stateCode = event.data;
+  switch (stateCode) {
+    case YT.PlayerState.UNSTARTED:
+      stateMsg = "시작 전";
+      break; // -1
+    case YT.PlayerState.ENDED:
+      stateMsg = "종료됨 (반복 재생)";
+      break; // 0
+    case YT.PlayerState.PLAYING:
+      stateMsg = "재생 중";
+      lastYoutubeError = null;
+      break; // 1
+    case YT.PlayerState.PAUSED:
+      stateMsg = youtubePausedForNotification
+        ? "알림으로 일시정지됨"
+        : "일시정지됨";
+      break; // 2
+    case YT.PlayerState.BUFFERING:
+      stateMsg = "버퍼링 중...";
+      break; // 3
+    case YT.PlayerState.CUED:
+      stateMsg = "로드됨 (대기 중)";
+      break; // 5
   }
-  if (event.data === -1 && lastYoutubeError) {
+  console.log(`YouTube Player State Change: ${stateCode} (${stateMsg})`);
+  if (!lastYoutubeError) {
+    document.getElementById("youtubeStatus").textContent = stateMsg;
+  }
+
+  if (stateCode === YT.PlayerState.ENDED && youtubeShouldBePlaying) {
+    console.log("Looping YouTube video.");
+    youtubePlayer.seekTo(0);
+    youtubePlayer.playVideo();
+  }
+  if (stateCode === YT.PlayerState.UNSTARTED && lastYoutubeError) {
     handleYoutubeError(lastYoutubeError);
   }
 }
+
 function onPlayerError(event) {
-  console.error("YouTube Player Error:", event.data);
+  console.error("YouTube Player Error Code:", event.data);
   lastYoutubeError = event.data;
   handleYoutubeError(event.data);
 }
+
 function handleYoutubeError(errorCode) {
   let msg = `로드/재생 실패 (코드: ${errorCode})`;
   switch (errorCode) {
     case 2:
-      msg = "잘못된 링크";
+      msg = "잘못된 링크/파라미터";
       break;
     case 5:
-      msg = "플레이어 오류";
+      msg = "HTML5 플레이어 오류";
       break;
     case 100:
       msg = "비디오 없음/비공개";
@@ -65,17 +95,15 @@ function handleYoutubeError(errorCode) {
       break;
   }
   document.getElementById("youtubeStatus").textContent = `오류: ${msg}`;
-  youtubeVideoId = null;
-  isYouTubePlayerReady = false;
-  youtubeShouldBePlaying = false;
+  console.error(`YouTube Error: ${msg} (Code: ${errorCode})`);
+  youtubeVideoId = null; // youtubeShouldBePlaying = false; // 오류 발생 시 재생 중단
 }
 
 // === 포모도로 타이머 로직 ===
 document.addEventListener("DOMContentLoaded", () => {
   // --- DOM 요소 참조 ---
   const body = document.body;
-  /* ... */ const currentTimeDisplay =
-    document.getElementById("currentTimeDisplay");
+  const currentTimeDisplay = document.getElementById("currentTimeDisplay");
   const timerDisplay = document.getElementById("timerDisplay");
   const timerStatus = document.getElementById("timerStatus");
   const notificationArea = document.getElementById("notificationArea");
@@ -99,8 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const fadeOverlay = document.getElementById("fadeOverlay");
   const imageEffectContainer = document.getElementById("imageEffectContainer");
   const backgroundImage = document.getElementById("backgroundImage");
-  /* imageOverlay 제거됨 */ const youtubeUrlInput =
-    document.getElementById("youtubeUrl");
+  const youtubeUrlInput = document.getElementById("youtubeUrl");
   const loadYoutubeButton = document.getElementById("loadYoutubeButton");
   const youtubeStatus = document.getElementById("youtubeStatus");
   const modal = document.getElementById("notificationModal");
@@ -141,8 +168,9 @@ document.addEventListener("DOMContentLoaded", () => {
     timerDisplay.textContent = formatTime(remainingSeconds);
   }
 
-  // --- ★ 배경화면 업데이트 (수정됨) ---
+  // --- 배경화면 업데이트 ---
   function updateBackground() {
+    /* 이전 버전의 수정된 코드와 동일 */
     const elapsedSeconds = totalDurationSeconds - remainingSeconds;
     let progressPercentage =
       totalDurationSeconds > 0
@@ -150,50 +178,40 @@ document.addEventListener("DOMContentLoaded", () => {
         : 0;
     if (progressPercentage > 100) progressPercentage = 100;
     if (progressPercentage < 0) progressPercentage = 0;
-
     const selectedType = backgroundTypeSelect.value;
     const startColor = startColorPicker.value;
     const endColor = endColorPicker.value;
-    currentStartColor = startColor; // 현재 설정 저장
+    currentStartColor = startColor;
     currentEndColor = endColor;
-
-    // 효과 요소 초기화
     fadeOverlay.style.display = "none";
     imageEffectContainer.style.display = "none";
-    backgroundImage.style.display = "none"; // 이미지 기본 숨김
-    backgroundImage.style.opacity = 0; // 이미지 투명도 초기화
-    progressVisualizer.style.backgroundColor = "transparent"; // Visualizer 배경 초기화 (투명)
-
-    let useEffectType = selectedType; // 실제 적용될 효과 타입
-
-    // 이미지 타입 처리
+    backgroundImage.style.display = "none";
+    backgroundImage.style.opacity = 0;
+    progressVisualizer.style.backgroundColor = "transparent";
+    let useEffectType = selectedType;
     if (useEffectType === "imageFade") {
       const isImageAvailable =
         userImageSrc &&
         backgroundImage.src === userImageSrc &&
         backgroundImage.complete &&
-        backgroundImage.naturalWidth > 0; // naturalWidth > 0 추가
+        backgroundImage.naturalWidth > 0;
       if (isImageAvailable) {
-        imageEffectContainer.style.display = "block"; // 이미지 컨테이너 보이기
-        backgroundImage.style.display = "block"; // 이미지 보이기
-        backgroundImage.style.opacity = progressPercentage / 100; // ★ 투명도 조절
-        // imageEffectContainer의 배경을 검정으로 설정하여 이미지가 나타나기 전 검정색 유지
+        imageEffectContainer.style.display = "block";
+        backgroundImage.style.display = "block";
+        backgroundImage.style.opacity = progressPercentage / 100;
         imageEffectContainer.style.backgroundColor = "#000000";
       } else {
-        // 이미지 없으면 단색 페이드로 전환
         useEffectType = "colorFade";
         if (userImageSrc) {
           console.warn("이미지 로드 실패. 단색 페이드로 대체.");
         }
       }
     }
-
-    // 단색 페이드 타입 처리 (이미지 실패 시 여기로 옴)
     if (useEffectType === "colorFade") {
-      progressVisualizer.style.backgroundColor = endColor; // 배경은 종료 색상
-      fadeOverlay.style.backgroundColor = startColor; // 오버레이는 시작 색상
+      progressVisualizer.style.backgroundColor = endColor;
+      fadeOverlay.style.backgroundColor = startColor;
       fadeOverlay.style.display = "block";
-      fadeOverlay.style.height = `${100 - progressPercentage}%`; // 오버레이가 줄어들며 종료 색상이 보임
+      fadeOverlay.style.height = `${100 - progressPercentage}%`;
     }
   }
 
@@ -273,6 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
       youtubePlayer.pauseVideo();
       youtubePausedForNotification = true;
+      console.log("Pausing YouTube for notification.");
     } else {
       youtubePausedForNotification = false;
     }
@@ -310,8 +329,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return m ? m[1] : null;
   }
   function loadYouTubeVideo() {
-    /* 이전과 동일 */ if (!isYouTubeApiReady) {
+    /* 이전과 동일 */ console.log("Attempting to load YouTube video...");
+    if (!isYouTubeApiReady) {
       alert("YouTube API 준비 안됨");
+      console.error("YouTube API not ready.");
       return;
     }
     const url = youtubeUrlInput.value.trim();
@@ -319,15 +340,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!videoId) {
       alert("유효한 유튜브 링크 입력");
       youtubeStatus.textContent = "잘못된 링크";
+      console.warn("Invalid YouTube URL:", url);
       return;
     }
+    console.log("Extracted Video ID:", videoId);
     youtubeVideoId = videoId;
     isYouTubePlayerReady = false;
     lastYoutubeError = null;
     youtubeStatus.textContent = "오디오 로딩 중...";
     if (youtubePlayer) {
+      console.log("Using existing player, loading video:", youtubeVideoId);
       youtubePlayer.cueVideoById(videoId);
     } else {
+      console.log("Creating new YouTube player for:", youtubeVideoId);
       youtubePlayer = new YT.Player("youtube-player", {
         height: "1",
         width: "1",
@@ -342,41 +367,55 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function playYouTubeAudio() {
-    /* 상태 업데이트 추가 */ if (
-      isYouTubePlayerReady &&
-      youtubeVideoId &&
-      !lastYoutubeError
-    ) {
+    /* 이전과 동일 */ console.log("Attempting to play YouTube audio...");
+    if (isYouTubePlayerReady && youtubeVideoId && !lastYoutubeError) {
+      console.log("Calling playVideo() for ID:", youtubeVideoId);
       youtubeStatus.textContent = "재생 시도 중...";
       youtubePlayer.playVideo();
       youtubeShouldBePlaying = true;
     } else if (lastYoutubeError) {
+      console.warn("Cannot play, previous error exists:", lastYoutubeError);
       handleYoutubeError(lastYoutubeError);
     } else if (!isYouTubePlayerReady) {
+      console.warn("Cannot play, player not ready.");
       youtubeStatus.textContent = "플레이어 준비 안됨";
+    } else if (!youtubeVideoId) {
+      console.warn("Cannot play, no video ID loaded.");
+      youtubeStatus.textContent = "로드된 오디오 없음";
     }
   }
   function pauseYouTubeAudio() {
-    /* 상태 업데이트 추가 */ if (
+    /* 이전과 동일 */ if (
       isYouTubePlayerReady &&
       youtubePlayer.getPlayerState() === YT.PlayerState.PLAYING
     ) {
-      youtubePlayer.pauseVideo(); /* youtubeStatus는 onStateChange에서 처리 */
+      console.log("Calling pauseVideo()");
+      youtubePlayer.pauseVideo();
     }
     youtubeShouldBePlaying = false;
   }
   function resumeYouTubeAudio() {
-    /* 상태 업데이트 추가 */ if (
+    /* 이전과 동일 */ if (
       isYouTubePlayerReady &&
       (timerInterval || isPaused) &&
       !lastYoutubeError
     ) {
-      youtubeStatus.textContent = "재생 재개 중...";
+      console.log("Attempting to resume YouTube audio...");
       playYouTubeAudio();
+    } else {
+      console.log(
+        "Cannot resume YouTube audio. Player ready:",
+        isYouTubePlayerReady,
+        "Timer running/paused:",
+        timerInterval || isPaused,
+        "Error:",
+        lastYoutubeError
+      );
     }
   }
   function stopYouTubeAudio() {
     /* 이전과 동일 */ if (isYouTubePlayerReady && !lastYoutubeError) {
+      console.log("Calling stopVideo()");
       youtubePlayer.stopVideo();
     }
     youtubeShouldBePlaying = false;
@@ -384,7 +423,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!lastYoutubeError) {
       youtubeStatus.textContent = "정지됨";
     }
-  } // 오류 없을때만 정지됨 표시
+  }
   loadYoutubeButton.addEventListener("click", loadYouTubeVideo);
 
   // --- 타이머 로직 ---
@@ -596,14 +635,12 @@ document.addEventListener("DOMContentLoaded", () => {
       imageUpload.value = "";
     }
   });
-
-  // ★ 배경 타입/색상 변경 리스너 (수정됨)
   function handleBackgroundSettingChange() {
-    const selectedType = backgroundTypeSelect.value;
+    /* 이전과 동일 */ const selectedType = backgroundTypeSelect.value;
     colorFadeOptionsContainer.style.display =
       selectedType === "colorFade" ? "flex" : "none";
     imageUploadContainer.style.display =
-      selectedType === "imageFade" ? "flex" : "none"; // ID 변경 없음, 타입 값만 바뀜
+      selectedType === "imageFade" ? "flex" : "none";
     if (!timerInterval && !delayInterval && !isPaused) {
       updateBackground();
     }
@@ -614,8 +651,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   startColorPicker.addEventListener("input", handleBackgroundSettingChange);
   endColorPicker.addEventListener("input", handleBackgroundSettingChange);
-
-  // 나머지 설정 변경 리스너
   [
     workDurationInput,
     breakDurationInput,
