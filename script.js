@@ -1,30 +1,26 @@
 // === YouTube IFrame Player API 로딩 ===
-var youtubePlayer;
-var youtubeVideoId = null;
-var youtubeVideoDuration = 0;
-var isYouTubeApiReady = false;
-var isYouTubePlayerReady = false;
-var youtubeShouldBePlaying = false;
-var youtubePausedForNotification = false;
-var lastYoutubeError = null; // ★ 유튜브 오류 코드 저장
-
+var youtubePlayer; /* ... (이전과 동일) ... */
+var youtubeVideoId = null,
+  youtubeVideoDuration = 0,
+  isYouTubeApiReady = false,
+  isYouTubePlayerReady = false;
+var youtubeShouldBePlaying = false,
+  youtubePausedForNotification = false,
+  lastYoutubeError = null;
 function onYouTubeIframeAPIReady() {
   isYouTubeApiReady = true;
-  // console.log("YouTube API Ready");
 }
-
 function onPlayerReady(event) {
   isYouTubePlayerReady = true;
   youtubeVideoDuration = event.target.getDuration();
   document.getElementById(
     "youtubeStatus"
   ).textContent = `오디오 로드됨 (${formatTime(youtubeVideoDuration)})`;
-  lastYoutubeError = null; // 성공 시 오류 초기화
+  lastYoutubeError = null;
   if (youtubeShouldBePlaying) {
     playYouTubeAudio();
   }
 }
-
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED) {
     if (youtubeShouldBePlaying) {
@@ -32,43 +28,35 @@ function onPlayerStateChange(event) {
       youtubePlayer.playVideo();
     }
   }
-  // 에러 발생 시 상태 업데이트 (재생 불가 등)
   if (event.data === -1 && lastYoutubeError) {
-    // unstarted 상태 + 에러 발생 시
     handleYoutubeError(lastYoutubeError);
   }
 }
-
-// ★ YouTube 플레이어 에러 핸들러
 function onPlayerError(event) {
   console.error("YouTube Player Error:", event.data);
-  lastYoutubeError = event.data; // 에러 코드 저장
+  lastYoutubeError = event.data;
   handleYoutubeError(event.data);
 }
-
-// ★ YouTube 오류 처리 및 상태 메시지 업데이트 함수
 function handleYoutubeError(errorCode) {
-  let errorMsg = "오디오 로드/재생 실패";
+  let msg = `로드/재생 실패 (코드: ${errorCode})`;
   switch (errorCode) {
     case 2:
-      errorMsg = "잘못된 파라미터 (링크 오류)";
+      msg = "잘못된 링크";
       break;
     case 5:
-      errorMsg = "HTML5 플레이어 오류";
+      msg = "플레이어 오류";
       break;
     case 100:
-      errorMsg = "비디오 없음/비공개";
+      msg = "비디오 없음/비공개";
       break;
     case 101:
     case 150:
-      errorMsg = "재생 권한 없음 (임베딩 불가)";
+      msg = "재생 권한 없음";
       break;
-    default:
-      errorMsg = `로드/재생 실패 (코드: ${errorCode})`;
   }
-  document.getElementById("youtubeStatus").textContent = errorMsg;
-  youtubeVideoId = null; // 오류 발생 시 ID 초기화
-  isYouTubePlayerReady = false; // 플레이어 사용 불가
+  document.getElementById("youtubeStatus").textContent = msg;
+  youtubeVideoId = null;
+  isYouTubePlayerReady = false;
   youtubeShouldBePlaying = false;
 }
 
@@ -88,16 +76,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const delayInput = document.getElementById("delayInput");
   const notifyInput = document.getElementById("notifyInput");
   const notificationTypeSelect = document.getElementById("notificationType");
-  const backgroundTypeSelect = document.getElementById("backgroundType"); // ★ ID 변경
-  const colorPickerContainer = document.getElementById("colorPickerContainer"); // ★ 단색 선택기 컨테이너
-  const colorPicker = document.getElementById("colorPicker"); // ★ 단색 선택기
+  const backgroundTypeSelect = document.getElementById("backgroundType");
+  const colorFadeOptionsContainer = document.getElementById(
+    "colorFadeOptionsContainer"
+  ); // ★ 단색 페이드 옵션 컨테이너
+  const startColorPicker = document.getElementById("startColorPicker"); // ★ 시작 색상
+  const endColorPicker = document.getElementById("endColorPicker"); // ★ 종료 색상
   const imageUploadContainer = document.getElementById("imageUploadContainer");
   const imageUpload = document.getElementById("imageUpload");
-  const progressVisualizer = document.getElementById("progressVisualizer"); // ★ 배경색 적용 대상
-  const fadeOverlay = document.getElementById("fadeOverlay");
-  const imageEffectContainer = document.getElementById("imageEffectContainer");
+  const progressVisualizer = document.getElementById("progressVisualizer");
+  const fadeOverlay = document.getElementById("fadeOverlay"); // 단색 페이드용
+  const imageEffectContainer = document.getElementById("imageEffectContainer"); // 이미지용
   const backgroundImage = document.getElementById("backgroundImage");
-  const imageOverlay = document.getElementById("imageOverlay");
+  const imageOverlay = document.getElementById("imageOverlay"); // 이미지용
   const youtubeUrlInput = document.getElementById("youtubeUrl");
   const loadYoutubeButton = document.getElementById("loadYoutubeButton");
   const youtubeStatus = document.getElementById("youtubeStatus");
@@ -107,33 +98,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalCloseButton = document.getElementById("modalCloseButton");
 
   // --- 상태 변수 ---
-  let timerInterval = null;
-  let delayInterval = null;
-  let delayRemainingSeconds = 0;
-  let currentTimeInterval = null;
-  let totalDurationSeconds = 0;
-  let remainingSeconds = 0;
-  let currentTimerMode = "work";
-  let pomodoroCycleCount = 0;
-  let isPaused = false;
-  let notificationShown = false;
+  let timerInterval = null,
+    delayInterval = null,
+    currentTimeInterval = null;
+  let delayRemainingSeconds = 0,
+    totalDurationSeconds = 0,
+    remainingSeconds = 0;
+  let currentTimerMode = "work",
+    pomodoroCycleCount = 0;
+  let isPaused = false,
+    notificationShown = false;
   let audioContext = null;
   let userImageSrc = null;
-  let currentBackgroundColor = colorPicker.value; // ★ 현재 배경색 저장
+  // ★ 현재 배경 설정 저장 (색상은 바로 읽어옴)
+  let currentStartColor = startColorPicker.value;
+  let currentEndColor = endColorPicker.value;
 
   // --- 기본 함수 ---
   function formatTime(seconds) {
-    /* 이전과 동일 */
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    const m = Math.floor(seconds / 60),
+      s = Math.floor(seconds % 60);
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
   function updateCurrentTime() {
-    /* 이전과 동일 */
-    const now = new Date();
-    const h = String(now.getHours()).padStart(2, "0");
-    const m = String(now.getMinutes()).padStart(2, "0");
-    const s = String(now.getSeconds()).padStart(2, "0");
+    const now = new Date(),
+      h = String(now.getHours()).padStart(2, "0"),
+      m = String(now.getMinutes()).padStart(2, "0"),
+      s = String(now.getSeconds()).padStart(2, "0");
     currentTimeDisplay.textContent = `${h}:${m}:${s}`;
   }
   function updateTimerDisplay() {
@@ -148,62 +139,54 @@ document.addEventListener("DOMContentLoaded", () => {
         ? (elapsedSeconds / totalDurationSeconds) * 100
         : 0;
     if (progressPercentage > 100) progressPercentage = 100;
-    if (progressPercentage < 0) progressPercentage = 0; // 음수 방지
+    if (progressPercentage < 0) progressPercentage = 0;
 
     const selectedType = backgroundTypeSelect.value;
-    const selectedColor = colorPicker.value;
-    currentBackgroundColor = selectedColor; // 현재 선택된 색상 저장
+    const startColor = startColorPicker.value;
+    const endColor = endColorPicker.value;
+    currentStartColor = startColor; // 현재 설정 저장
+    currentEndColor = endColor;
 
-    // 모든 시각 요소 초기화 (매번 호출 시)
+    // 기본적으로 모든 효과 요소 숨김
     fadeOverlay.style.display = "none";
-    fadeOverlay.style.height = "100%"; // 페이드 초기 상태
     imageEffectContainer.style.display = "none";
-    imageOverlay.style.height = "100%"; // 이미지 오버레이 초기 상태
-    backgroundImage.style.display = "none"; // 이미지 숨김
-    progressVisualizer.style.backgroundColor = selectedColor; // 기본 배경은 선택된 색상
+    backgroundImage.style.display = "none";
 
-    let useType = selectedType;
+    let useEffectType = selectedType; // 실제 적용될 효과 타입
 
     // 이미지 타입 처리
-    if (useType === "image") {
+    if (useEffectType === "image") {
       const isImageAvailable =
         userImageSrc &&
         backgroundImage.src === userImageSrc &&
         backgroundImage.complete &&
         backgroundImage.naturalWidth !== 0;
       if (isImageAvailable) {
+        progressVisualizer.style.backgroundColor = "#FFFFFF"; // 이미지 배경은 흰색으로 고정
         imageEffectContainer.style.display = "block";
         backgroundImage.style.display = "block";
         imageOverlay.style.height = `${100 - progressPercentage}%`;
-        // 이미지 배경일 때는 progressVisualizer 배경을 투명하게? or 흰색? 일단 유지.
       } else {
-        // 이미지 없으면 단색 타입으로 강제 변경 (선택된 색상 사용)
-        useType = "color";
+        // 이미지 없으면 단색 페이드로 전환
+        useEffectType = "colorFade";
         if (userImageSrc) {
-          // 시도는 했으나 실패한 경우
-          console.warn("이미지 로드 실패. 단색 배경으로 대체합니다.");
+          console.warn("이미지 로드 실패. 단색 페이드로 대체.");
         }
       }
     }
 
-    // 단색 타입 처리 (이미지 실패 시 여기로 옴)
-    if (useType === "color") {
-      progressVisualizer.style.backgroundColor = selectedColor; // 선택된 색상 적용
-      // 오버레이 등은 이미 숨겨진 상태
-    }
-
-    // 페이드 타입 처리
-    if (useType === "fade") {
-      progressVisualizer.style.backgroundColor = "#ffffff"; // 페이드는 흰색 배경 기준
+    // 단색 페이드 타입 처리 (이미지 실패 시 여기로 옴)
+    if (useEffectType === "colorFade") {
+      progressVisualizer.style.backgroundColor = endColor; // 배경은 종료 색상
+      fadeOverlay.style.backgroundColor = startColor; // 오버레이는 시작 색상
       fadeOverlay.style.display = "block";
-      fadeOverlay.style.height = `${100 - progressPercentage}%`;
+      fadeOverlay.style.height = `${100 - progressPercentage}%`; // 오버레이가 줄어들며 종료 색상이 보임
     }
   }
 
   // --- 오디오 및 알림 함수 ---
   function playBeepFallback() {
-    /* 이전과 동일 */
-    try {
+    /* 이전과 동일 */ try {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -230,8 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function triggerSpeech(message) {
-    /* 이전과 동일 */
-    if (
+    /* 이전과 동일 */ if (
       "speechSynthesis" in window &&
       typeof SpeechSynthesisUtterance !== "undefined"
     ) {
@@ -267,10 +249,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   modalCloseButton.addEventListener("click", hideModal);
   modalOverlay.addEventListener("click", hideModal);
-
   function triggerNotification(message, isFinal = false) {
-    /* 유튜브 일시정지 로직 포함 (이전과 동일) */
-    const type = notificationTypeSelect.value;
+    /* 이전과 동일 */ const type = notificationTypeSelect.value;
     let pauseYoutube = type === "popup" || type === "beep" || type === "speech";
     if (
       pauseYoutube &&
@@ -311,15 +291,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 유튜브 관련 함수 ---
   function extractVideoID(url) {
-    /* 이전과 동일 */
-    const regex =
+    /* 이전과 동일 */ const r =
       /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/gi;
-    const match = regex.exec(url);
-    return match ? match[1] : null;
+    const m = r.exec(url);
+    return m ? m[1] : null;
   }
   function loadYouTubeVideo() {
-    /* 에러 핸들러 추가 */
-    if (!isYouTubeApiReady) {
+    /* 이전과 동일 (onError 포함) */ if (!isYouTubeApiReady) {
       alert("YouTube API 준비 안됨");
       return;
     }
@@ -332,14 +310,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     youtubeVideoId = videoId;
     isYouTubePlayerReady = false;
-    lastYoutubeError = null; // 에러 초기화
+    lastYoutubeError = null;
     youtubeStatus.textContent = "오디오 로딩 중...";
     if (youtubePlayer) {
-      console.log("Loading new video:", youtubeVideoId);
       youtubePlayer.cueVideoById(videoId);
-      // 기존 플레이어 객체에 이벤트 핸들러가 이미 등록되어 있으므로 재등록 불필요
     } else {
-      console.log("Creating YouTube player for:", youtubeVideoId);
       youtubePlayer = new YT.Player("youtube-player", {
         height: "1",
         width: "1",
@@ -349,20 +324,24 @@ document.addEventListener("DOMContentLoaded", () => {
           onReady: onPlayerReady,
           onStateChange: onPlayerStateChange,
           onError: onPlayerError,
-        }, // ★ onError 추가
+        },
       });
     }
   }
   function playYouTubeAudio() {
-    if (isYouTubePlayerReady && youtubeVideoId && !lastYoutubeError) {
+    /* 이전과 동일 */ if (
+      isYouTubePlayerReady &&
+      youtubeVideoId &&
+      !lastYoutubeError
+    ) {
       youtubePlayer.playVideo();
       youtubeShouldBePlaying = true;
     } else if (lastYoutubeError) {
-      handleYoutubeError(lastYoutubeError); /* 에러 상태면 메시지 재표시 */
+      handleYoutubeError(lastYoutubeError);
     }
   }
   function pauseYouTubeAudio() {
-    if (
+    /* 이전과 동일 */ if (
       isYouTubePlayerReady &&
       youtubePlayer.getPlayerState() === YT.PlayerState.PLAYING
     ) {
@@ -371,7 +350,7 @@ document.addEventListener("DOMContentLoaded", () => {
     youtubeShouldBePlaying = false;
   }
   function resumeYouTubeAudio() {
-    if (
+    /* 이전과 동일 */ if (
       isYouTubePlayerReady &&
       (timerInterval || isPaused) &&
       !lastYoutubeError
@@ -380,7 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function stopYouTubeAudio() {
-    if (isYouTubePlayerReady && !lastYoutubeError) {
+    /* 이전과 동일 */ if (isYouTubePlayerReady && !lastYoutubeError) {
       youtubePlayer.stopVideo();
     }
     youtubeShouldBePlaying = false;
@@ -390,8 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 타이머 로직 ---
   function startTimer() {
-    /* 유튜브 재생 시작 로직 수정 */
-    if (timerInterval || delayInterval) return;
+    /* 이전과 동일 */ if (timerInterval || delayInterval) return;
     isPaused = false;
     setControlsState(true);
     const delaySeconds = parseInt(delayInput.value);
@@ -424,21 +402,19 @@ document.addEventListener("DOMContentLoaded", () => {
       notificationArea.textContent = "";
       if (youtubeVideoId && !isPaused && !lastYoutubeError) {
         playYouTubeAudio();
-      } // ★ 에러 없을 때만 재생 시도
-      else if (youtubeVideoId && isPaused && !lastYoutubeError) {
+      } else if (youtubeVideoId && isPaused && !lastYoutubeError) {
         resumeYouTubeAudio();
       }
       runInterval(notifySecondsBeforeEnd);
     }
   }
   function runInterval(notifySecondsBeforeEnd) {
-    /* 배경 업데이트 호출 */
-    updateTimerDisplay();
-    updateBackground(); // ★ 배경 즉시 업데이트
+    /* 이전과 동일 (updateBackground 호출) */ updateTimerDisplay();
+    updateBackground();
     timerInterval = setInterval(() => {
       remainingSeconds--;
       updateTimerDisplay();
-      updateBackground(); // ★ 매초 배경 업데이트
+      updateBackground();
       if (
         !notificationShown &&
         notifySecondsBeforeEnd > 0 &&
@@ -455,8 +431,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1000);
   }
   function handleTimerEnd() {
-    /* 이전과 동일 (유튜브 정지 포함) */
-    clearInterval(timerInterval);
+    /* 이전과 동일 */ clearInterval(timerInterval);
     timerInterval = null;
     remainingSeconds = 0;
     const breakMinutes = parseInt(breakDurationInput.value);
@@ -485,8 +460,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function pauseTimer() {
-    /* 이전과 동일 (유튜브 일시정지 포함) */
-    if (delayInterval) {
+    /* 이전과 동일 */ if (delayInterval) {
       clearInterval(delayInterval);
       delayInterval = null;
       isPaused = true;
@@ -516,8 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function resetTimer() {
-    /* 배경 업데이트 호출 */
-    clearInterval(timerInterval);
+    /* 이전과 동일 (updateBackground 호출) */ clearInterval(timerInterval);
     clearInterval(delayInterval);
     timerInterval = null;
     delayInterval = null;
@@ -533,14 +506,13 @@ document.addEventListener("DOMContentLoaded", () => {
     resetControlsState();
     resetTimerSettings();
     updateTimerDisplay();
-    updateBackground(); // ★ 배경 업데이트
+    updateBackground();
     notificationArea.textContent = "";
     timerStatus.textContent = "대기 중";
     hideModal();
   }
   function resetTimerSettings() {
-    /* 이전과 동일 */
-    const workM = parseInt(workDurationInput.value),
+    /* 이전과 동일 */ const workM = parseInt(workDurationInput.value),
       breakM = parseInt(breakDurationInput.value);
     totalDurationSeconds =
       currentTimerMode === "work" ? workM * 60 : breakM * 60;
@@ -551,8 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- UI 및 컨트롤 상태 관리 ---
   function setControlsState(isRunning) {
-    /* 이전과 동일 */
-    if (isRunning) {
+    /* 이전과 동일 */ if (isRunning) {
       body.classList.add("timer-running");
     } else {
       body.classList.remove("timer-running");
@@ -575,8 +546,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   function resetControlsState() {
-    /* 이전과 동일 */
-    setControlsState(false);
+    /* 이전과 동일 */ setControlsState(false);
     pauseButton.textContent = "일시정지";
     pauseButton.classList.remove("resume");
     pauseButton.disabled = true;
@@ -584,8 +554,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- 이벤트 리스너 ---
   imageUpload.addEventListener("change", (event) => {
-    /* 이전과 동일 */
-    const file = event.target.files[0];
+    /* 이전과 동일 */ const file = event.target.files[0];
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -608,23 +577,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ★ 배경 타입/색상 변경 리스너 수정
+  // ★ 배경 타입/색상 변경 리스너 (수정됨)
   function handleBackgroundSettingChange() {
     const selectedType = backgroundTypeSelect.value;
-    colorPickerContainer.style.display =
-      selectedType === "color" ? "flex" : "none";
+    colorFadeOptionsContainer.style.display =
+      selectedType === "colorFade" ? "flex" : "none"; // flex로 변경
     imageUploadContainer.style.display =
-      selectedType === "image" ? "flex" : "none";
-    // 타이머 멈춰있을 때만 배경 즉시 업데이트
+      selectedType === "image" ? "flex" : "none"; // flex로 변경
+
     if (!timerInterval && !delayInterval && !isPaused) {
-      updateBackground();
+      updateBackground(); // 타이머 멈췄을 때만 즉시 배경 업데이트
     }
   }
   backgroundTypeSelect.addEventListener(
     "change",
     handleBackgroundSettingChange
   );
-  colorPicker.addEventListener("input", handleBackgroundSettingChange); // 색상 변경 시 실시간 반영
+  startColorPicker.addEventListener("input", handleBackgroundSettingChange); // 실시간 반영
+  endColorPicker.addEventListener("input", handleBackgroundSettingChange); // 실시간 반영
 
   // 나머지 설정 변경 리스너
   [
@@ -634,8 +604,7 @@ document.addEventListener("DOMContentLoaded", () => {
     notifyInput,
     notificationTypeSelect,
   ].forEach((el) => {
-    /* 이전과 동일 */
-    el.addEventListener("change", () => {
+    /* 이전과 동일 */ el.addEventListener("change", () => {
       if (!timerInterval && !delayInterval && !isPaused) {
         resetTimer();
       } else {
@@ -651,12 +620,11 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCurrentTime();
   currentTimeInterval = setInterval(updateCurrentTime, 1000);
   handleBackgroundSettingChange(); // ★ 초기 로드 시 배경 옵션 표시 설정
-  resetTimer(); // ★ 초기화 (내부에서 updateBackground 호출)
+  resetTimer();
 
   // --- AudioContext 초기화 리스너 ---
   function initializeAudioContext() {
-    /* 이전과 동일 */
-    if (!audioContext) {
+    /* 이전과 동일 */ if (!audioContext) {
       try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         console.log("AudioContext initialized.");

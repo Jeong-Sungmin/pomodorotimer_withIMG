@@ -9,7 +9,9 @@
   <body class="">
     <div class="timer-container">
       <div class="progress-visualizer" id="progressVisualizer">
+        <!-- 단색 페이드 효과 요소 -->
         <div class="progress-overlay fade-overlay" id="fadeOverlay"></div>
+        <!-- 이미지 배경 효과 요소 -->
         <div
           class="progress-overlay image-effect-container"
           id="imageEffectContainer"
@@ -71,19 +73,22 @@
             <div>
               <label for="backgroundType">배경 타입:</label>
               <select id="backgroundType">
-                <option value="fade" selected>페이드 효과</option>
-                <option value="color">단색 배경</option>
+                <option value="colorFade" selected>단색 페이드</option>
                 <option value="image">이미지 배경</option>
               </select>
             </div>
             <div
-              id="colorPickerContainer"
+              id="colorFadeOptionsContainer"
               class="background-option-container"
-              style="display: none"
             >
-              <label for="colorPicker">배경 색상:</label>
-              <input type="color" id="colorPicker" value="#FFFFFF" /> {/* 기본
-              흰색 */}
+              <div>
+                <label for="startColorPicker">시작 색상:</label>
+                <input type="color" id="startColorPicker" value="#000000" />
+              </div>
+              <div>
+                <label for="endColorPicker">종료 색상:</label>
+                <input type="color" id="endColorPicker" value="#FFFFFF" />
+              </div>
             </div>
             <div
               id="imageUploadContainer"
@@ -92,7 +97,7 @@
             >
               <label for="imageUpload">이미지 선택:</label>
               <input type="file" id="imageUpload" accept="image/*" />
-              <div class="upload-hint">(이미지 없을 시 단색 배경 적용)</div>
+              <div class="upload-hint">(미선택 시 단색 페이드 적용)</div>
             </div>
           </fieldset>
 
