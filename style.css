@@ -1,4 +1,4 @@
-/* 기본 스타일 및 레이아웃 */
+/* 기본 스타일 ... (이전과 동일) */
 body {
   display: flex;
   justify-content: center;
@@ -7,16 +7,15 @@ body {
   background-color: #f0f0f0;
   font-family: sans-serif;
   margin: 0;
-  overflow: hidden; /* 스크롤바 방지 */
+  overflow: hidden;
 }
-
 .timer-container {
   position: relative;
   width: 100%;
   height: 100vh;
 }
 
-/* 시각 효과 영역 */
+/* 시각 효과 영역 ... (이전과 동일) */
 .progress-visualizer {
   position: absolute;
   top: 0;
@@ -24,28 +23,23 @@ body {
   width: 100%;
   height: 100%;
   z-index: 1;
-  background-color: white; /* 기본 배경 */
+  background-color: white;
 }
-
 .progress-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  transition: height 0.5s linear; /* 부드러운 전환 */
+  transition: height 0.5s linear;
 }
-
-/* 검정->흰색 효과 */
 .fade-overlay {
   background-color: black;
-  z-index: 3; /* 이미지 효과보다 위에 */
+  z-index: 3;
 }
-
-/* 이미지 효과 */
 .image-effect-container {
-  z-index: 2; /* 페이드 효과 아래 */
-  overflow: hidden; /* 내부 오버레이가 넘치지 않게 */
+  z-index: 2;
+  overflow: hidden;
 }
 #backgroundImage {
   position: absolute;
@@ -53,23 +47,23 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* 이미지가 비율 유지하며 꽉 차게 */
+  object-fit: cover;
+  display: none;
 }
 .image-overlay {
   position: absolute;
-  top: 0; /* 위에서부터 가려짐 */
+  top: 0;
   left: 0;
   width: 100%;
-  height: 100%; /* 시작 시 이미지 전체를 덮음 */
-  background-color: rgba(0, 0, 0, 0.9); /* 약간 투명한 검정 오버레이 */
-  /* 또는 background-color: black; */
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
   transition: height 0.5s linear;
 }
 
-/* 컨트롤 영역 */
+/* 컨트롤 영역 ... (기본 구조 동일, 내부 요소 간격 등 미세 조정) */
 .controls {
   position: relative;
-  z-index: 10; /* 다른 모든 요소 위에 */
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -79,103 +73,189 @@ body {
   box-sizing: border-box;
   color: #333;
   text-align: center;
-  /* 배경을 약간 투명하게 하여 아래 시각 효과가 비치도록 함 */
   background-color: rgba(255, 255, 255, 0.75);
-  border-radius: 10px; /* 보기 좋게 약간의 둥근 모서리 */
-  margin: auto; /* 중앙 정렬 시도 */
-  max-width: 500px; /* 너무 넓어지지 않게 */
-  max-height: 600px; /* 너무 길어지지 않게 */
+  border-radius: 10px;
+  margin: auto;
+  max-width: 550px; /* 너비 약간 증가 */
+  max-height: 90vh; /* 최대 높이 조정 */
+  overflow-y: auto;
 }
 
+/* 시간 정보 ... (이전과 동일) */
+.time-info {
+  margin-bottom: 10px;
+}
 #currentTimeDisplay {
   font-size: 1.5em;
   color: #555;
   margin-bottom: 5px;
 }
-
 .timer-display {
-  font-size: 6em; /* 타이머 시간 크게 */
+  font-size: 5.5em; /* 약간 줄임 */
   font-weight: bold;
   margin-bottom: 5px;
   color: #222;
 }
-
 .timer-status {
-  font-size: 1.2em;
-  margin-bottom: 15px;
+  font-size: 1.1em; /* 약간 줄임 */
+  margin-bottom: 10px;
   color: #444;
-  min-height: 1.5em; /* 상태 메시지 공간 확보 */
+  min-height: 1.5em;
 }
-
 .notification-area {
-  min-height: 25px;
-  margin-bottom: 15px;
-  color: #d9534f;
+  min-height: 20px;
+  margin-bottom: 10px;
+  color: #4682b4; /* SteelBlue */
   font-weight: bold;
-  font-size: 1.1em;
+  font-size: 1em;
 }
 
 /* 설정 영역 */
 .settings-area {
   display: flex;
-  flex-wrap: wrap; /* 공간 부족 시 줄바꿈 */
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 15px; /* 필드셋 간격 */
-  margin-bottom: 20px;
+  gap: 10px; /* 간격 줄임 */
+  margin-bottom: 15px;
   width: 100%;
+  transition: opacity 0.3s ease, visibility 0.3s ease, max-height 0.3s ease;
+  max-height: 500px; /* 최대 높이 설정 */
+  overflow: hidden;
 }
+body.timer-running .settings-area {
+  opacity: 0;
+  visibility: hidden;
+  max-height: 0;
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+} /* 숨김 처리 강화 */
 
 .settings-area fieldset {
   border: 1px solid #ccc;
   border-radius: 5px;
-  padding: 10px;
-  min-width: 180px; /* 최소 너비 */
+  padding: 8px 12px; /* 패딩 줄임 */
+  min-width: 200px;
+  background-color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 5px;
 }
-
 .settings-area legend {
   font-weight: bold;
   padding: 0 5px;
+  font-size: 0.95em;
 }
-
 .settings-area div {
   margin-bottom: 8px;
-  display: flex; /* 레이블과 입력 정렬 */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.settings-area label {
+  font-size: 0.9em;
+  width: 75px; /* 레이블 너비 조정 */
+  text-align: right;
+  flex-shrink: 0;
+}
+.settings-area input[type="number"],
+.settings-area select,
+.settings-area input[type="text"] {
+  /* 텍스트 입력 포함 */
+  padding: 4px 6px;
+  flex-grow: 1;
+  min-width: 50px;
+  font-size: 0.9em;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+.settings-area input[type="file"] {
+  padding: 3px;
+  flex-grow: 1;
+  font-size: 0.85em;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+/* ★ 유튜브 입력 그룹 */
+.youtube-input-group {
+  display: flex;
   align-items: center;
   gap: 5px;
 }
-.settings-area label {
-  /* flex-basis: 100px; /* 레이블 너비 고정 (선택적) */
-  /* text-align: right; */
+.youtube-input-group input[type="text"] {
+  flex-grow: 1;
 }
-.settings-area input[type="number"],
-.settings-area select {
-  width: 60px;
-  padding: 5px;
+.youtube-input-group button {
+  padding: 4px 8px;
+  font-size: 0.85em;
+  background-color: #e0e0e0;
+  flex-shrink: 0;
 }
-.settings-area input[type="radio"],
-.settings-area input[type="checkbox"] {
-  margin-right: 3px;
+#youtubeStatus {
+  font-size: 0.8em;
+  color: #666;
+  text-align: center;
+  margin-top: 5px;
 }
 
-/* 버튼 */
-.buttons button {
-  padding: 12px 25px;
-  margin: 0 8px;
-  font-size: 1.1em;
+/* ★ 숨겨진 유튜브 플레이어 컨테이너 */
+#youtube-player-container {
+  position: absolute;
+  top: -9999px; /* 화면 밖으로 */
+  left: -9999px;
+  width: 1px; /* 매우 작게 */
+  height: 1px;
+  overflow: hidden;
+}
+
+/* 시작 버튼 */
+.start-button-container {
+  margin-top: 10px;
+  transition: opacity 0.3s ease, visibility 0.3s ease, height 0.3s ease;
+}
+body.timer-running .start-button-container {
+  opacity: 0;
+  visibility: hidden;
+  height: 0;
+  margin: 0;
+}
+
+/* 실행 중 버튼 (우상단) */
+.running-buttons {
+  visibility: hidden;
+  opacity: 0; /* 기본 숨김 */
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 11;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 5px;
+  border-radius: 5px;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+body.timer-running .running-buttons {
+  visibility: visible;
+  opacity: 1;
+} /* 실행 시 보임 */
+
+/* 공통 버튼 스타일 ... (이전과 동일) */
+button {
+  padding: 8px 15px; /* 패딩 약간 줄임 */
+  margin: 0 5px;
+  font-size: 0.95em;
   cursor: pointer;
   border: none;
   border-radius: 5px;
   transition: background-color 0.2s ease;
 }
-
 #startButton {
   background-color: #5cb85c;
   color: white;
+  padding: 10px 20px;
+  font-size: 1em;
 }
 #startButton:hover {
   background-color: #4cae4c;
 }
-
 #pauseButton {
   background-color: #f0ad4e;
   color: white;
@@ -185,11 +265,10 @@ body {
 }
 #pauseButton.resume {
   background-color: #337ab7;
-} /* 재개 상태 */
+}
 #pauseButton.resume:hover {
   background-color: #286090;
 }
-
 #resetButton {
   background-color: #d9534f;
   color: white;
@@ -197,8 +276,53 @@ body {
 #resetButton:hover {
   background-color: #c9302c;
 }
-
 button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+/* ★ 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: none; /* 기본 숨김 */
+}
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  z-index: 101;
+  display: none; /* 기본 숨김 */
+  min-width: 250px;
+  text-align: center;
+}
+.modal-content {
+  position: relative;
+}
+.close-button {
+  position: absolute;
+  top: -15px;
+  right: -10px;
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+}
+.close-button:hover {
+  color: #333;
+}
+#modalMessage {
+  margin: 0;
+  font-size: 1.1em;
 }

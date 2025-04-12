@@ -1,88 +1,140 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>포모도로 시계 (Web Audio)</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>포모도로 타이머 (유튜브 통합)</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="">
+    {/* timer-running 클래스가 동적으로 추가/제거됨 */}
     <div class="timer-container">
-        {/* 시각 효과 영역 */}
-        <div class="progress-visualizer" id="progressVisualizer">
-            <div class="progress-overlay fade-overlay" id="fadeOverlay"></div>
-            <div class="progress-overlay image-effect-container" id="imageEffectContainer">
-                {/* placeholder.jpg는 선택 사항입니다. 없으면 이미지 효과 선택 시 페이드 효과로 대체됩니다. */}
-                <img src="placeholder.jpg" alt="배경 이미지" id="backgroundImage" onerror="this.style.display='none';">
-                <div class="image-overlay" id="imageOverlay"></div>
-            </div>
+      {/* 시각 효과 영역 */}
+      <div class="progress-visualizer" id="progressVisualizer">
+        <div class="progress-overlay fade-overlay" id="fadeOverlay"></div>
+        <div
+          class="progress-overlay image-effect-container"
+          id="imageEffectContainer"
+        >
+          <img
+            src=""
+            alt="배경 이미지"
+            id="backgroundImage"
+            style="display: none"
+            onerror="this.style.display='none';"
+          />
+          <div class="image-overlay" id="imageOverlay"></div>
+        </div>
+      </div>
+
+      {/* 컨트롤 및 정보 영역 */}
+      <div class="controls">
+        {/* 시간 관련 정보 */}
+        <div class="time-info">
+          <div id="currentTimeDisplay">--:--:--</div>
+          <div class="timer-display" id="timerDisplay">--:--</div>
+          <div class="timer-status" id="timerStatus">대기 중</div>
+          <div class="notification-area" id="notificationArea"></div>
+          {/* 주로 지연 카운트다운용 */}
         </div>
 
-        {/* 컨트롤 및 정보 영역 */}
-        <div class="controls">
-            <div id="currentTimeDisplay">--:--:--</div>
-            <div class="timer-display" id="timerDisplay">--:--</div>
-            <div class="timer-status" id="timerStatus">대기 중</div>
-            <div class="notification-area" id="notificationArea"></div>
-
-            <div class="settings-area">
-                 <fieldset>
-                    <legend>타이머 설정</legend>
-                    <div>
-                        <label>타입:</label>
-                        <input type="radio" id="typeSingle" name="timerType" value="single" checked> <label for="typeSingle">단일</label>
-                        <input type="radio" id="typePomodoro" name="timerType" value="pomodoro"> <label for="typePomodoro">포모도로</label>
-                    </div>
-                    <div>
-                        <label for="workDurationInput">집중 시간 (분):</label>
-                        <input type="number" id="workDurationInput" value="25" min="1">
-                    </div>
-                    <div id="breakSettings" style="display: none;">
-                         <label for="breakDurationInput">휴식 시간 (분):</label>
-                         <input type="number" id="breakDurationInput" value="5" min="1">
-                    </div>
-                    <div>
-                         <label for="delayInput">시작 지연 (초):</label>
-                         <input type="number" id="delayInput" value="3" min="0">
-                    </div>
-                </fieldset>
-                 <fieldset>
-                    <legend>알림 설정</legend>
-                     <div>
-                        <label for="notifyInput">종료 알림 (분 전):</label>
-                        <input type="number" id="notifyInput" value="5" min="0">
-                    </div>
-                     <div>
-                        <label>알림 방식:</label>
-                        <select id="notificationType">
-                            <option value="text">텍스트</option>
-                            <option value="beep">삐 소리 (Web Audio)</option>
-                            <option value="speech">음성 (브라우저 지원 시)</option>
-                        </select>
-                    </div>
-                </fieldset>
-                 <fieldset>
-                    <legend>시각 효과 설정</legend>
-                    <div>
-                        <label>효과:</label>
-                        <select id="visualEffectType">
-                            <option value="fade" selected>검정->흰색</option>
-                            <option value="image">이미지 표시 (이미지 필요)</option>
-                        </select>
-                    </div>
-                </fieldset>
+        {/* 설정 영역 */}
+        <div class="settings-area">
+          <fieldset>
+            <legend>타이머 설정</legend>
+            <div>
+              <label for="workDurationInput">집중 시간 (분):</label>
+              <input type="number" id="workDurationInput" value="25" min="1" />
             </div>
-
-            <div class="buttons">
-                <button id="startButton">시작</button>
-                <button id="pauseButton" disabled>일시정지</button>
-                <button id="resetButton">초기화</button>
+            <div>
+              <label for="breakDurationInput">휴식 시간 (분):</label>
+              <input type="number" id="breakDurationInput" value="5" min="0" />
             </div>
+            <div>
+              <label for="delayInput">시작 지연 (초):</label>
+              <input type="number" id="delayInput" value="3" min="0" />
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>알림 설정</legend>
+            <div>
+              <label for="notifyInput">종료 알림 (분 전):</label>
+              <input type="number" id="notifyInput" value="5" min="0" />
+            </div>
+            <div>
+              <label>알림 방식:</label>
+              <select id="notificationType">
+                <option value="popup">텍스트 팝업</option>
+                {/* 기본 팝업 */}
+                <option value="beep">삐 소리 (Web Audio)</option>
+                <option value="speech">음성 (브라우저 지원 시)</option>
+              </select>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>시각 효과</legend>
+            <div>
+              <label>효과:</label>
+              <select id="visualEffectType">
+                <option value="fade" selected>검정->흰색</option>
+                <option value="image">이미지 표시</option>
+              </select>
+            </div>
+            <div id="imageUploadContainer" style="display: none">
+              <label for="imageUpload">이미지 선택:</label>
+              <input type="file" id="imageUpload" accept="image/*" />
+            </div>
+          </fieldset>
+
+          {/* ★ 유튜브 설정 추가 */}
+          <fieldset>
+            <legend>배경 오디오 (유튜브)</legend>
+            <div class="youtube-input-group">
+              <label for="youtubeUrl">유튜브 링크:</label>
+              <input
+                type="text"
+                id="youtubeUrl"
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <button id="loadYoutubeButton" title="유튜브 오디오 로드">
+                로드
+              </button>
+            </div>
+            <div id="youtubeStatus">오디오 없음</div>
+          </fieldset>
         </div>
+
+        {/* 시작 버튼 */}
+        <div class="start-button-container">
+          <button id="startButton">시작</button>
+        </div>
+
+        {/* 실행 중 버튼 (우상단 이동) */}
+        <div class="running-buttons">
+          <button id="pauseButton" disabled>일시정지</button>
+          <button id="resetButton">초기화</button>
+        </div>
+      </div>
+
+      {/* ★ 유튜브 플레이어 숨김 영역 */}
+      <div id="youtube-player-container">
+        <div id="youtube-player"></div>
+      </div>
+
+      {/* ★ 텍스트 알림 모달 */}
+      <div id="notificationModal" class="modal">
+        <div class="modal-content">
+          <span class="close-button" id="modalCloseButton">×</span>
+          <p id="modalMessage"></p>
+        </div>
+      </div>
+      <div id="modalOverlay" class="modal-overlay"></div>
     </div>
 
-    {/* <audio> 태그가 필요 없습니다. */}
-
+    {/* 유튜브 IFrame API 비동기 로드 */}
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
